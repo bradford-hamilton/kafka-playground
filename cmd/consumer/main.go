@@ -10,12 +10,16 @@ import (
 	"github.com/Shopify/sarama"
 )
 
+const (
+	topic = "neat_topic"
+	addr  = "localhost:9092"
+)
+
 func main() {
 	config := sarama.NewConfig()
 	config.Consumer.Return.Errors = true
 
-	// Create new consumer
-	consumer, err := sarama.NewConsumer([]string{"localhost:9092"}, config)
+	consumer, err := sarama.NewConsumer([]string{addr}, config)
 	if err != nil {
 		log.Fatalf("failed to create new consumer: %v", err)
 	}
@@ -26,17 +30,14 @@ func main() {
 		}
 	}()
 
-	// Consume from "test" topic from the beginning
-	partitionConsumer, err := consumer.ConsumePartition("test", 0, sarama.OffsetOldest)
+	partitionConsumer, err := consumer.ConsumePartition(topic, 0, sarama.OffsetOldest)
 	if err != nil {
 		fmt.Printf("failed to create new consumer: %v", err)
 	}
 
-	// Listen for os signals
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, os.Interrupt)
 
-	// Consume messages until signaled to stop
 run:
 	for {
 		select {
@@ -53,7 +54,7 @@ run:
 			break run
 		default:
 			fmt.Print(".")
-			time.Sleep(time.Millisecond * 500)
+			time.Sleep(time.Millisecond * 250)
 		}
 	}
 }

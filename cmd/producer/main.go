@@ -7,13 +7,16 @@ import (
 	"github.com/Shopify/sarama"
 )
 
+const (
+	topic = "neat_topic"
+	addr  = "localhost:9092"
+)
+
 func main() {
 	config := sarama.NewConfig()
-	config.Producer.Retry.Max = 10
 	config.Producer.Return.Successes = true
 
-	// Create new producer
-	producer, err := sarama.NewSyncProducer([]string{"localhost:9092"}, config)
+	producer, err := sarama.NewSyncProducer([]string{addr}, config)
 	if err != nil {
 		log.Fatalf("failed to start sarama producer: %v\n", err)
 	}
@@ -24,15 +27,19 @@ func main() {
 		}
 	}()
 
-	msg := sarama.ProducerMessage{
-		Topic: "test",
-		Value: sarama.StringEncoder("testing"),
-	}
+	messages := []string{"neat_data", "is really neat", "and fast"}
 
-	partition, offset, err := producer.SendMessage(&msg)
-	if err != nil {
-		fmt.Printf("failed to send message: %v\n", err)
-	} else {
-		fmt.Printf("message sent, partition: %v, offset: %v\n", partition, offset)
+	for _, m := range messages {
+		msg := sarama.ProducerMessage{
+			Topic: topic,
+			Value: sarama.StringEncoder(m),
+		}
+
+		partition, offset, err := producer.SendMessage(&msg)
+		if err != nil {
+			fmt.Printf("failed to send message: %v\n", err)
+		} else {
+			fmt.Printf("message sent, partition: %v, offset: %v\n", partition, offset)
+		}
 	}
 }
